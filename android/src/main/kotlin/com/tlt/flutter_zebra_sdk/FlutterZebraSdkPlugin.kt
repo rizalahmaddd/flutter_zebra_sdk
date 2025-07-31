@@ -184,11 +184,7 @@ class FlutterZebraSdkPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
 
   fun splitString(data: String?): List<String> {
     if (data.isNullOrEmpty()) return emptyList()
-
-    // Regular expression to match the strings between delimiters
     val regex = Regex("""\^XA.*?\^XZ""")
-
-    // Find all matches and return them as a list
     return regex.findAll(data).map { it.value }.toList()
   }
   private fun onPrintZplDataOverBluetooth(@NonNull call: MethodCall, @NonNull result: Result) {
@@ -198,28 +194,16 @@ class FlutterZebraSdkPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
     if (data == null) {
       result.error("onPrintZplDataOverBluetooth", "Data is required", "Data Content")
     }
-
     var conn: BluetoothLeConnection? = null
     try {
       conn = BluetoothLeConnection(macAddress, context)
-
-      // Open the connection - physical connection is established here.
-
-      // Open the connection - physical connection is established here.
       conn.open()
-
-      // Send the data to printer as a byte array.
-
-      // Send the data to printer as a byte array.
-      // conn.write(data?.toByteArray())
       val result = splitString(data)
-    
       result.forEach { part ->
         conn.write(part.toByteArray())
-        Thread.sleep(500)
+        Thread.sleep(800)
       }
-
-      Thread.sleep(500)
+      Thread.sleep(2000)
     } catch (e: Exception) {
       // Handle communications error here.
       e.printStackTrace()
