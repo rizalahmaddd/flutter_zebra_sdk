@@ -3,6 +3,10 @@ version '1.0-SNAPSHOT'
 
 buildscript {
     ext.kotlin_version = '1.5.20'
+
+    kotlinOptions {
+        jvmTarget = "1.8"
+    }
     repositories {
         google()
         jcenter()
