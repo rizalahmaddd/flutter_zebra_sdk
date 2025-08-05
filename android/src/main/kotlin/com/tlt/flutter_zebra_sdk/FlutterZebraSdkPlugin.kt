@@ -182,43 +182,142 @@ class FlutterZebraSdkPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
     }
   }
 
+ 
   fun splitString(data: String?): List<String> {
     if (data.isNullOrEmpty()) return emptyList()
-    val regex = Regex("""\^XA.*?\^XZ""")
-    return regex.findAll(data).map { it.value }.toList()
+    
+    // Improved regex pattern to handle multiline ZPL commands
+    val regex = Regex("""\^XA[\s\S]*?\^XZ""", RegexOption.MULTILINE)
+    val matches = regex.findAll(data).map { it.value }.toList()
+    
+    // Log untuk debugging
+    Log.d(logTag, "splitString: Found ${matches.size} ZPL commands")
+    matches.forEachIndexed { index, command ->
+      Log.d(logTag, "Command $index: ${command.take(50)}...")
+    }
+    
+    // Validasi bahwa semua command memiliki struktur yang benar
+    val validCommands = matches.filter { command ->
+      command.startsWith("^XA") && command.endsWith("^XZ")
+    }
+    
+    if (validCommands.size != matches.size) {
+      Log.w(logTag, "Warning: ${matches.size - validCommands.size} invalid commands found")
+    }
+    
+    return validCommands
   }
+
   private fun onPrintZplDataOverBluetooth(@NonNull call: MethodCall, @NonNull result: Result) {
     var macAddress: String? = call.argument("mac")
     var data: String? = call.argument("data")
-    Log.d(logTag, "onPrintZplDataOverBluetooth $macAddress $data")
+    var delay: Int = call.argument("delay") ?: 800
+    var maxRetries: Int = call.argument("maxRetries") ?: 3
+    
+    Log.d(logTag, "onPrintZplDataOverBluetooth $macAddress delay: $delay maxRetries: $maxRetries")
+    Log.d(logTag, "Original data length: ${data?.length ?: 0}")
+    
     if (data == null) {
       result.error("onPrintZplDataOverBluetooth", "Data is required", "Data Content")
+      return
     }
+    
     var conn: BluetoothLeConnection? = null
     try {
       conn = BluetoothLeConnection(macAddress, context)
       conn.open()
-      val result = splitString(data)
-      result.forEach { part ->
-        conn.write(part.toByteArray())
-        Thread.sleep(800)
+      
+      val commands = splitString(data)
+      Log.d(logTag, "Split into ${commands.size} commands")
+      
+      if (commands.isEmpty()) {
+        result.error("onPrintZplDataOverBluetooth", "No valid ZPL commands found", "Check data format")
+        return
       }
+      
+      commands.forEachIndexed { index, command ->
+        var success = false
+        var retryCount = 0
+        
+        while (!success && retryCount < maxRetries) {
+          try {
+            Log.d(logTag, "Sending command ${index + 1}/${commands.size}, attempt ${retryCount + 1}")
+            conn.write(command.toByteArray())
+            
+            // Verify write operation (if possible)
+            Thread.sleep(delay.toLong())
+            success = true
+            Log.d(logTag, "Command ${index + 1} sent successfully")
+            
+          } catch (e: Exception) {
+            retryCount++
+            Log.w(logTag, "Failed to send command ${index + 1}, attempt $retryCount: ${e.message}")
+            
+            if (retryCount < maxRetries) {
+              Thread.sleep(delay.toLong()) // Wait before retry
+            } else {
+              throw e // Re-throw if all retries failed
+            }
+          }
+        }
+      }
+      
+      // Final delay to ensure all commands are processed
       Thread.sleep(2000)
+      Log.d(logTag, "All commands sent successfully")
+      result.success("Print completed successfully")
+      
     } catch (e: Exception) {
-      // Handle communications error here.
       e.printStackTrace()
-      result.error("Error", "onPrintZplDataOverBluetooth", e)
+      Log.e(logTag, "Error in onPrintZplDataOverBluetooth: ${e.message}")
+      result.error("Error", "onPrintZplDataOverBluetooth", e.message)
     } finally {
       if (null != conn) {
         try {
           conn.close()
+          Log.d(logTag, "Connection closed")
         } catch (e: ConnectionException) {
           e.printStackTrace()
         }
       }
     }
-
   }
+
+  //  fun splitString(data: String?): List<String> {
+  //   if (data.isNullOrEmpty()) return emptyList()
+  //   val regex = Regex("""\^XA.*?\^XZ""")
+  //   return regex.findAll(data).map { it.value }.toList()
+  // }
+  // private fun onPrintZplDataOverBluetooth(@NonNull call: MethodCall, @NonNull result: Result) {
+  //   var macAddress: String? = call.argument("mac")
+  //   var data: String? = call.argument("data")
+  //   Log.d(logTag, "onPrintZplDataOverBluetooth $macAddress $data")
+  //   if (data == null) {
+  //     result.error("onPrintZplDataOverBluetooth", "Data is required", "Data Content")
+  //   }
+  //   var conn: BluetoothLeConnection? = null
+  //   try {
+  //     conn = BluetoothLeConnection(macAddress, context)
+  //     conn.open()
+  //     val result = splitString(data)
+  //     result.forEach { part ->
+  //       conn.write(part.toByteArray())
+  //       Thread.sleep(800)
+  //     }
+  //     Thread.sleep(2000)
+  //   } catch (e: Exception) {
+  //     e.printStackTrace()
+  //     result.error("Error", "onPrintZplDataOverBluetooth", e)
+  //   } finally {
+  //     if (null != conn) {
+  //       try {
+  //         conn.close()
+  //       } catch (e: ConnectionException) {
+  //         e.printStackTrace()
+  //       }
+  //     }
+  //   }
+  // }
 
   private fun onGetPrinterInfo(@NonNull call: MethodCall, @NonNull result: Result) {
     var ipE: String? = call.argument("ip")
