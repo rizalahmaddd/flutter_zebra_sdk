@@ -232,10 +232,10 @@ class FlutterZebraSdkPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
             val bytesToSend = combinedPart.toByteArray()
             // sendLogToFlutter("Mengirim ${bytesToSend.size} byte: '${combinedPart.take(50)}...'")
             conn.write(bytesToSend)
-            Thread.sleep(350)
+            Thread.sleep(400)
         }
         // sendLogToFlutter("Selesai mengirim semua data ZPL.")
-        Thread.sleep(350)
+        Thread.sleep(400)
         result.success(true)
     } catch (e: Exception) {
         val errorMessage = "Error saat mencetak data ZPL melalui Bluetooth: ${e.message}"
