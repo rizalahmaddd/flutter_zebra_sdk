@@ -197,8 +197,14 @@ class FlutterZebraSdkPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
     try {
       conn = BluetoothLeConnection(macAddress, context)
       conn.open()
+      //log lengh disini
+      Log.d(logTag, "onPrintZplDataOverBluetooth data length: ${data.length}")
       val result = splitString(data)
+      //log count disini
+      Log.d(logTag, "onPrintZplDataOverBluetooth data count: ${result.size}")
       result.forEach { part ->
+        //log disini
+        Log.d(logTag, "onPrintZplDataOverBluetooth $part")
         conn.write(part.toByteArray())
         Thread.sleep(400)
       }
