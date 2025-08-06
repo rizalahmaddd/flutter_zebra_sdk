@@ -206,7 +206,7 @@ class FlutterZebraSdkPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
         //log disini
         Log.d(logTag, "onPrintZplDataOverBluetooth $part")
         conn.write(part.toByteArray())
-        Thread.sleep(400)
+        Thread.sleep(350)
       }
       Thread.sleep(600)
     }catch (e: Exception) {
