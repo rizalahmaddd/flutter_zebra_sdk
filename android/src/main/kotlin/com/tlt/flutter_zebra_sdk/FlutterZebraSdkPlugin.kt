@@ -181,32 +181,67 @@ class FlutterZebraSdkPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
       conn.close()
     }
   }
-
- 
   fun splitString(data: String?): List<String> {
     if (data.isNullOrEmpty()) return emptyList()
-    
-    // Improved regex pattern to handle multiline ZPL commands
-    val regex = Regex("""\^XA[\s\S]*?\^XZ""", RegexOption.MULTILINE)
-    val matches = regex.findAll(data).map { it.value }.toList()
-    
-    // Log untuk debugging
-    Log.d(logTag, "splitString: Found ${matches.size} ZPL commands")
-    matches.forEachIndexed { index, command ->
-      Log.d(logTag, "Command $index: ${command.take(50)}...")
-    }
-    
-    // Validasi bahwa semua command memiliki struktur yang benar
-    val validCommands = matches.filter { command ->
-      command.startsWith("^XA") && command.endsWith("^XZ")
-    }
-    
-    if (validCommands.size != matches.size) {
-      Log.w(logTag, "Warning: ${matches.size - validCommands.size} invalid commands found")
-    }
-    
-    return validCommands
+    val regex = Regex("""\^XA.*?\^XZ""")
+    return regex.findAll(data).map { it.value }.toList()
   }
+
+  private fun onPrintZplDataOverBluetooth(@NonNull call: MethodCall, @NonNull result: Result) {
+    var macAddress: String? = call.argument("mac")
+    var data: String? = call.argument("data")
+    if (data == null) {
+      result.error("onPrintZplDataOverBluetooth", "Data is required", "Data Content")      
+    }
+    var conn: BluetoothLeConnection? = null
+    try {
+      conn = BluetoothLeConnection(macAddress, context)
+      conn.open()
+      val result = splitString(data)
+      result.forEach { part ->
+        conn.write(part.toByteArray())
+        Thread.sleep(500)
+      }
+      Thread.sleep(1000)
+    }catch (e: Exception) {
+      e.printStackTrace()
+    } finally {
+      if (null != conn) {
+        try {
+          conn.close()
+        } catch (e: ConnectionException) {
+          e.printStackTrace()
+        }
+      }
+    }
+  }
+ 
+  // fun splitString(data: String?): List<String> {
+  //   if (data.isNullOrEmpty()) return emptyList()
+    
+  //   // Improved regex pattern to handle multiline ZPL commands
+  //   val regex = Regex("""\^XA[\s\S]*?\^XZ""", RegexOption.MULTILINE)
+  //   val matches = regex.findAll(data).map { it.value }.toList()
+    
+  //   // Log untuk debugging
+  //   Log.d(logTag, "splitString: Found ${matches.size} ZPL commands")
+  //   matches.forEachIndexed { index, command ->
+  //     Log.d(logTag, "Command $index: ${command.take(50)}...")
+  //   }
+    
+  //   // Validasi bahwa semua command memiliki struktur yang benar
+  //   val validCommands = matches.filter { command ->
+  //     command.startsWith("^XA") && command.endsWith("^XZ")
+  //   }
+    
+  //   if (validCommands.size != matches.size) {
+  //     Log.w(logTag, "Warning: ${matches.size - validCommands.size} invalid commands found")
+  //   }
+    
+  //   return validCommands
+  // }
+
+  
 
   private fun onPrintZplDataOverBluetooth(@NonNull call: MethodCall, @NonNull result: Result) {
     var macAddress: String? = call.argument("mac")
