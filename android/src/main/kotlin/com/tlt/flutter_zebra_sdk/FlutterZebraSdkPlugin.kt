@@ -190,72 +190,53 @@ class FlutterZebraSdkPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
   private fun onPrintZplDataOverBluetooth(@NonNull call: MethodCall, @NonNull result: Result) {
     var macAddress: String? = call.argument("mac")
     var data: String? = call.argument("data")
+    if (data == null) {
+        result.error("onPrintZplDataOverBluetooth", "Data is required", "Data Content")
+        return // Menghentikan eksekusi jika data kosong
+    }
 
-    // Fungsi helper untuk mengirim log ke Flutter
-    // fun sendLogToFlutter(message: String) {
-    //     channel.invokeMethod("logFromNative", message)
-    //     Log.d(logTag, message) // Tetap log ke Logcat juga
-    // }
-
-    // if (data == null) {
-    //     sendLogToFlutter("Error: Data is required for onPrintZplDataOverBluetooth")
-    //     result.error("onPrintZplDataOverBluetooth", "Data is required", "Data Content")
-    //     return
-    // }
-
-    var conn: BluetoothLeConnection? = null
+    // Variabel conn didefinisikan di luar blok try untuk scope yang lebih luas
+    var conn: BluetoothLeConnection? = null 
     try {
+        // --- 1. Buka koneksi HANYA SATU KALI di awal ---
         conn = BluetoothLeConnection(macAddress, context)
         conn.open()
 
-        // Log panjang data dan jumlah bagian setelah di-split
-        // sendLogToFlutter("onPrintZplDataOverBluetooth data length: ${data.length}")
+        Log.d(logTag, "onPrintZplDataOverBluetooth data length: ${data.length}")
         val partsToSend = splitString(data)
-        // sendLogToFlutter("onPrintZplDataOverBluetooth data count: ${partsToSend.size}")
+        Log.d(logTag, "onPrintZplDataOverBluetooth data count: ${partsToSend.size}")
 
-        var i = 0
-        while (i < partsToSend.size) {
-            val part1 = partsToSend[i]
-
-            val combinedPart: String
-            if (i + 1 < partsToSend.size) {
-                val part2 = partsToSend[i + 1]
-                combinedPart = part1 + part2
-                // sendLogToFlutter("Menggabungkan: '$part1' dan '$part2'")
-                i += 2
-            } else {
-                combinedPart = part1
-                // sendLogToFlutter("Mengirim string terakhir: '$part1'")
-                i += 1
-            }
-
-            val bytesToSend = combinedPart.toByteArray()
-            // sendLogToFlutter("Mengirim ${bytesToSend.size} byte: '${combinedPart.take(50)}...'")
-            conn.write(bytesToSend)
-            Thread.sleep(400)
+        // --- 2. Lakukan perulangan untuk mengirim SEMUA bagian data ---
+        partsToSend.forEach { part ->
+            Log.d(logTag, "onPrintZplDataOverBluetooth part to send: $part")
+            conn.write(part.toByteArray())
+            // Jeda waktu antar pengiriman per bagian masih diperlukan
+            Thread.sleep(500) 
         }
-        // sendLogToFlutter("Selesai mengirim semua data ZPL.")
-        Thread.sleep(400)
+
+        // Jeda waktu setelah semua bagian dikirim
+        Thread.sleep(600)
+
+        // --- 3. Kirim hasil sukses ke Flutter
         result.success(true)
+
     } catch (e: Exception) {
-        val errorMessage = "Error saat mencetak data ZPL melalui Bluetooth: ${e.message}"
-        // sendLogToFlutter(errorMessage)
-        Log.e(logTag, errorMessage, e)
-        result.error("onPrintZplDataOverBluetooth", "Error during Bluetooth print", e.message)
+        // Tangani error
+        e.printStackTrace()
+        result.error("onPrintZplDataOverBluetooth", "Error during printing: ${e.message}", e.toString())
     } finally {
+        // --- 4. Tutup koneksi HANYA SATU KALI di akhir ---
         if (null != conn) {
             try {
                 conn.close()
-                // sendLogToFlutter("Koneksi Bluetooth ditutup.")
             } catch (e: ConnectionException) {
-                val closeErrorMessage = "Error menutup koneksi Bluetooth: ${e.message}"
-                // sendLogToFlutter(closeErrorMessage)
-                Log.e(logTag, closeErrorMessage, e)
+                e.printStackTrace()
+                // result.error tidak bisa dipanggil di sini karena sudah ada hasil sebelumnya
+                Log.e(logTag, "Error closing connection: ${e.message}")
             }
         }
     }
-  }
-  // cara lalu
+}
   // private fun onPrintZplDataOverBluetooth(@NonNull call: MethodCall, @NonNull result: Result) {
   //    var macAddress: String? = call.argument("mac")
   //   var data: String? = call.argument("data")
