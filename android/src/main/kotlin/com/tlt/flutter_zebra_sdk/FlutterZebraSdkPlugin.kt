@@ -227,20 +227,22 @@ class FlutterZebraSdkPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
     try {
       conn = BluetoothLeConnection(macAddress, context)
       conn.open()
-      
-      val commands = splitString(data)
-      Log.d(logTag, "Split into ${commands.size} commands")
-      
-      if (commands.isEmpty()) {
-        result.error("onPrintZplDataOverBluetooth", "No valid ZPL commands found", "Check data format")
-        return
-      }
+      Thread.sleep(500)
+     
 
       when (mode) {
         1 -> {
           conn.write(data.toByteArray())
         }
         else -> {
+           
+          val commands = splitString(data)
+          Log.d(logTag, "Split into ${commands.size} commands")
+          
+          if (commands.isEmpty()) {
+            result.error("onPrintZplDataOverBluetooth", "No valid ZPL commands found", "Check data format")
+            return
+          }
           commands.forEachIndexed { index, command ->
             var success = false
             var retryCount = 0
@@ -270,10 +272,7 @@ class FlutterZebraSdkPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
         }
       }
     
-      
-      // Final delay to ensure all commands are processed
-      Thread.sleep(2000)
-      Log.d(logTag, "All commands sent successfully")
+      Thread.sleep(1000)
       result.success("Print completed successfully")
       
     } catch (e: Exception) {
