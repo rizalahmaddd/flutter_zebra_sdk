@@ -227,7 +227,6 @@ class FlutterZebraSdkPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
     try {
       conn = BluetoothLeConnection(macAddress, context)
       conn.open()
-      Thread.sleep(500)
      
 
       when (mode) {
