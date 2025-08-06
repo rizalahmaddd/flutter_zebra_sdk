@@ -234,6 +234,10 @@ class FlutterZebraSdkPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
         result.error("onPrintZplDataOverBluetooth", "No valid ZPL commands found", "Check data format")
         return
       }
+
+      //cancel all before this
+      conn.write("~JA".toByteArray())
+      Thread.sleep(500)
       
       commands.forEachIndexed { index, command ->
         var success = false
