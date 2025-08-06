@@ -235,6 +235,7 @@ class FlutterZebraSdkPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
             Thread.sleep(350)
         }
         // sendLogToFlutter("Selesai mengirim semua data ZPL.")
+        Thread.sleep(350)
         result.success(true)
     } catch (e: Exception) {
         val errorMessage = "Error saat mencetak data ZPL melalui Bluetooth: ${e.message}"
