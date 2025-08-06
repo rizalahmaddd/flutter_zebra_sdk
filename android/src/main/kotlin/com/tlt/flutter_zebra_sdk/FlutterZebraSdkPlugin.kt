@@ -211,7 +211,7 @@ class FlutterZebraSdkPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
   private fun onPrintZplDataOverBluetooth(@NonNull call: MethodCall, @NonNull result: Result) {
     var macAddress: String? = call.argument("mac")
     var data: String? = call.argument("data")
-    var delay: Int = call.argument("delay") ?: 800
+    var delay: Int = call.argument("delay") ?: 400
     var maxRetries: Int = call.argument("maxRetries") ?: 3
     
     Log.d(logTag, "onPrintZplDataOverBluetooth $macAddress delay: $delay maxRetries: $maxRetries")
@@ -236,8 +236,8 @@ class FlutterZebraSdkPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
       }
 
       //cancel all before this
-      conn.write("~JA".toByteArray())
-      Thread.sleep(500)
+      // conn.write("~JA".toByteArray())
+      // Thread.sleep(500)
       
       commands.forEachIndexed { index, command ->
         var success = false
@@ -306,7 +306,7 @@ class FlutterZebraSdkPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
   //     val result = splitString(data)
   //     result.forEach { part ->
   //       conn.write(part.toByteArray())
-  //       Thread.sleep(800)
+  //       Thread.sleep(400)
   //     }
   //     Thread.sleep(2000)
   //   } catch (e: Exception) {
