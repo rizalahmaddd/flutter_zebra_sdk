@@ -272,7 +272,7 @@ class FlutterZebraSdkPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
         }
       }
     
-      Thread.sleep(1000)
+      Thread.sleep(300);
       result.success("Print completed successfully")
       
     } catch (e: Exception) {
