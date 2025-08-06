@@ -202,7 +202,7 @@ class FlutterZebraSdkPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
         conn.write(part.toByteArray())
         Thread.sleep(500)
       }
-      Thread.sleep(1000)
+      Thread.sleep(500)
     }catch (e: Exception) {
       e.printStackTrace()
     } finally {
