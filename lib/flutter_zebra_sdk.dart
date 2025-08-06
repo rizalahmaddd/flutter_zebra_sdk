@@ -27,6 +27,7 @@ class ZebraSdk {
     String? data,
     int? delay,
     int? maxRetries,
+    int? mode,
   }) async {
     final Map<String, dynamic> params = {"mac": macAddress};
     if (data != null) {
@@ -37,6 +38,9 @@ class ZebraSdk {
     }
     if (maxRetries != null) {
       params['maxRetries'] = maxRetries;
+    }
+    if (mode != null) {
+      params['mode'] = mode;
     }
     return await _channel.invokeMethod('printZPLOverBluetooth', params);
   }

@@ -213,6 +213,7 @@ class FlutterZebraSdkPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
     var data: String? = call.argument("data")
     var delay: Int = call.argument("delay") ?: 400
     var maxRetries: Int = call.argument("maxRetries") ?: 3
+    var mode: Int = call.argument("mode") ?: 2
     
     Log.d(logTag, "onPrintZplDataOverBluetooth $macAddress delay: $delay maxRetries: $maxRetries")
     Log.d(logTag, "Original data length: ${data?.length ?: 0}")
@@ -235,36 +236,40 @@ class FlutterZebraSdkPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
         return
       }
 
-      //cancel all before this
-      // conn.write("~JA".toByteArray())
-      // Thread.sleep(500)
-      
-      commands.forEachIndexed { index, command ->
-        var success = false
-        var retryCount = 0
-        
-        while (!success && retryCount < maxRetries) {
-          try {
-            Log.d(logTag, "Sending command ${index + 1}/${commands.size}, attempt ${retryCount + 1}")
-            conn.write(command.toByteArray())
+      when (mode) {
+        1 -> {
+          conn.write(data.toByteArray())
+        }
+        else -> {
+          commands.forEachIndexed { index, command ->
+            var success = false
+            var retryCount = 0
             
-            // Verify write operation (if possible)
-            Thread.sleep(delay.toLong())
-            success = true
-            Log.d(logTag, "Command ${index + 1} sent successfully")
-            
-          } catch (e: Exception) {
-            retryCount++
-            Log.w(logTag, "Failed to send command ${index + 1}, attempt $retryCount: ${e.message}")
-            
-            if (retryCount < maxRetries) {
-              Thread.sleep(delay.toLong()) // Wait before retry
-            } else {
-              throw e // Re-throw if all retries failed
+            while (!success && retryCount < maxRetries) {
+              try {
+                Log.d(logTag, "Sending command ${index + 1}/${commands.size}, attempt ${retryCount + 1}")
+                conn.write(command.toByteArray())
+                
+                // Verify write operation (if possible)
+                Thread.sleep(delay.toLong())
+                success = true
+                Log.d(logTag, "Command ${index + 1} sent successfully")
+                
+              } catch (e: Exception) {
+                retryCount++
+                Log.w(logTag, "Failed to send command ${index + 1}, attempt $retryCount: ${e.message}")
+                
+                if (retryCount < maxRetries) {
+                  Thread.sleep(delay.toLong()) // Wait before retry
+                } else {
+                  throw e // Re-throw if all retries failed
+                }
+              }
             }
           }
         }
       }
+    
       
       // Final delay to ensure all commands are processed
       Thread.sleep(2000)
