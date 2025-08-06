@@ -187,7 +187,7 @@ class FlutterZebraSdkPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
     return regex.findAll(data).map { it.value }.toList()
   }
 
-  private fun onPrintZplDataOverBluetooth(@NonNull call: MethodCall, @NonNull result: Result, context: Context, logTag: String, channel: MethodChannel) {
+  private fun onPrintZplDataOverBluetooth(@NonNull call: MethodCall, @NonNull result: Result) {
     var macAddress: String? = call.argument("mac")
     var data: String? = call.argument("data")
 
