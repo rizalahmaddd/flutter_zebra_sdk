@@ -200,9 +200,9 @@ class FlutterZebraSdkPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
       val result = splitString(data)
       result.forEach { part ->
         conn.write(part.toByteArray())
-        Thread.sleep(800)
+        Thread.sleep(400)
       }
-      Thread.sleep(1000)
+      Thread.sleep(600)
     }catch (e: Exception) {
       e.printStackTrace()
     } finally {
