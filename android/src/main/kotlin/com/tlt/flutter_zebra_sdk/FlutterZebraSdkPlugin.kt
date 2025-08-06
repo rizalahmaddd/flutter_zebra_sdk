@@ -192,16 +192,16 @@ class FlutterZebraSdkPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
     var data: String? = call.argument("data")
 
     // Fungsi helper untuk mengirim log ke Flutter
-    fun sendLogToFlutter(message: String) {
-        channel.invokeMethod("logFromNative", message)
-        Log.d(logTag, message) // Tetap log ke Logcat juga
-    }
+    // fun sendLogToFlutter(message: String) {
+    //     channel.invokeMethod("logFromNative", message)
+    //     Log.d(logTag, message) // Tetap log ke Logcat juga
+    // }
 
-    if (data == null) {
-        sendLogToFlutter("Error: Data is required for onPrintZplDataOverBluetooth")
-        result.error("onPrintZplDataOverBluetooth", "Data is required", "Data Content")
-        return
-    }
+    // if (data == null) {
+    //     sendLogToFlutter("Error: Data is required for onPrintZplDataOverBluetooth")
+    //     result.error("onPrintZplDataOverBluetooth", "Data is required", "Data Content")
+    //     return
+    // }
 
     var conn: BluetoothLeConnection? = null
     try {
@@ -209,9 +209,9 @@ class FlutterZebraSdkPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
         conn.open()
 
         // Log panjang data dan jumlah bagian setelah di-split
-        sendLogToFlutter("onPrintZplDataOverBluetooth data length: ${data.length}")
+        // sendLogToFlutter("onPrintZplDataOverBluetooth data length: ${data.length}")
         val partsToSend = splitString(data)
-        sendLogToFlutter("onPrintZplDataOverBluetooth data count: ${partsToSend.size}")
+        // sendLogToFlutter("onPrintZplDataOverBluetooth data count: ${partsToSend.size}")
 
         var i = 0
         while (i < partsToSend.size) {
@@ -221,34 +221,34 @@ class FlutterZebraSdkPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
             if (i + 1 < partsToSend.size) {
                 val part2 = partsToSend[i + 1]
                 combinedPart = part1 + part2
-                sendLogToFlutter("Menggabungkan: '$part1' dan '$part2'")
+                // sendLogToFlutter("Menggabungkan: '$part1' dan '$part2'")
                 i += 2
             } else {
                 combinedPart = part1
-                sendLogToFlutter("Mengirim string terakhir: '$part1'")
+                // sendLogToFlutter("Mengirim string terakhir: '$part1'")
                 i += 1
             }
 
             val bytesToSend = combinedPart.toByteArray()
-            sendLogToFlutter("Mengirim ${bytesToSend.size} byte: '${combinedPart.take(50)}...'")
+            // sendLogToFlutter("Mengirim ${bytesToSend.size} byte: '${combinedPart.take(50)}...'")
             conn.write(bytesToSend)
             Thread.sleep(350)
         }
-        sendLogToFlutter("Selesai mengirim semua data ZPL.")
+        // sendLogToFlutter("Selesai mengirim semua data ZPL.")
         result.success(true)
     } catch (e: Exception) {
         val errorMessage = "Error saat mencetak data ZPL melalui Bluetooth: ${e.message}"
-        sendLogToFlutter(errorMessage)
+        // sendLogToFlutter(errorMessage)
         Log.e(logTag, errorMessage, e)
         result.error("onPrintZplDataOverBluetooth", "Error during Bluetooth print", e.message)
     } finally {
         if (null != conn) {
             try {
                 conn.close()
-                sendLogToFlutter("Koneksi Bluetooth ditutup.")
+                // sendLogToFlutter("Koneksi Bluetooth ditutup.")
             } catch (e: ConnectionException) {
                 val closeErrorMessage = "Error menutup koneksi Bluetooth: ${e.message}"
-                sendLogToFlutter(closeErrorMessage)
+                // sendLogToFlutter(closeErrorMessage)
                 Log.e(logTag, closeErrorMessage, e)
             }
         }
