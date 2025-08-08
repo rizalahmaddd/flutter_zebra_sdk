@@ -192,230 +192,38 @@ class FlutterZebraSdkPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
     var data: String? = call.argument("data")
     if (data == null) {
         result.error("onPrintZplDataOverBluetooth", "Data is required", "Data Content")
-        return // Menghentikan eksekusi jika data kosong
+        return 
     }
 
-    // Variabel conn didefinisikan di luar blok try untuk scope yang lebih luas
     var conn: BluetoothLeConnection? = null 
     try {
-        // --- 1. Buka koneksi HANYA SATU KALI di awal ---
         conn = BluetoothLeConnection(macAddress, context)
         conn.open()
-
         Log.d(logTag, "onPrintZplDataOverBluetooth data length: ${data.length}")
         val partsToSend = splitString(data)
         Log.d(logTag, "onPrintZplDataOverBluetooth data count: ${partsToSend.size}")
-
-        // --- 2. Lakukan perulangan untuk mengirim SEMUA bagian data ---
         partsToSend.forEach { part ->
             Log.d(logTag, "onPrintZplDataOverBluetooth part to send: $part")
             conn.write(part.toByteArray())
-            // Jeda waktu antar pengiriman per bagian masih diperlukan
             Thread.sleep(500) 
         }
-
-        // Jeda waktu setelah semua bagian dikirim
         Thread.sleep(600)
-
-        // --- 3. Kirim hasil sukses ke Flutter
         result.success(true)
-
     } catch (e: Exception) {
-        // Tangani error
         e.printStackTrace()
         result.error("onPrintZplDataOverBluetooth", "Error during printing: ${e.message}", e.toString())
     } finally {
-        // --- 4. Tutup koneksi HANYA SATU KALI di akhir ---
         if (null != conn) {
             try {
                 conn.close()
             } catch (e: ConnectionException) {
                 e.printStackTrace()
-                // result.error tidak bisa dipanggil di sini karena sudah ada hasil sebelumnya
                 Log.e(logTag, "Error closing connection: ${e.message}")
             }
         }
     }
-}
-  // private fun onPrintZplDataOverBluetooth(@NonNull call: MethodCall, @NonNull result: Result) {
-  //    var macAddress: String? = call.argument("mac")
-  //   var data: String? = call.argument("data")
-  //   if (data == null) {
-  //     result.error("onPrintZplDataOverBluetooth", "Data is required", "Data Content")      
-  //   }
-  //   var conn: BluetoothLeConnection? = null
-  //   try {
-  //     conn = BluetoothLeConnection(macAddress, context)
-  //     conn.open()
-  //     //log lengh disini
-  //     Log.d(logTag, "onPrintZplDataOverBluetooth data length: ${data.length}")
-  //     val result = splitString(data)
-  //     //log count disini
-  //     Log.d(logTag, "onPrintZplDataOverBluetooth data count: ${result.size}")
-  //     result.forEach { part ->
-  //       //log disini
-  //       Log.d(logTag, "onPrintZplDataOverBluetooth $part")
-  //       conn.write(part.toByteArray())
-  //       Thread.sleep(350)
-  //     }
-  //     Thread.sleep(600)
-  //   }catch (e: Exception) {
-  //     e.printStackTrace()
-  //   } finally {
-  //     if (null != conn) {
-  //       try {
-  //         conn.close()
-  //       } catch (e: ConnectionException) {
-  //         e.printStackTrace()
-  //       }
-  //     }
-  //   }
-  // }
- 
-  // fun splitString(data: String?): List<String> {
-  //   if (data.isNullOrEmpty()) return emptyList()
-    
-  //   // Improved regex pattern to handle multiline ZPL commands
-  //   val regex = Regex("""\^XA[\s\S]*?\^XZ""", RegexOption.MULTILINE)
-  //   val matches = regex.findAll(data).map { it.value }.toList()
-    
-  //   // Log untuk debugging
-  //   Log.d(logTag, "splitString: Found ${matches.size} ZPL commands")
-  //   matches.forEachIndexed { index, command ->
-  //     Log.d(logTag, "Command $index: ${command.take(50)}...")
-  //   }
-    
-  //   // Validasi bahwa semua command memiliki struktur yang benar
-  //   val validCommands = matches.filter { command ->
-  //     command.startsWith("^XA") && command.endsWith("^XZ")
-  //   }
-    
-  //   if (validCommands.size != matches.size) {
-  //     Log.w(logTag, "Warning: ${matches.size - validCommands.size} invalid commands found")
-  //   }
-    
-  //   return validCommands
-  // }
-
+  }
   
-
-  // private fun onPrintZplDataOverBluetooth(@NonNull call: MethodCall, @NonNull result: Result) {
-  //   var macAddress: String? = call.argument("mac")
-  //   var data: String? = call.argument("data")
-  //   var delay: Int = call.argument("delay") ?: 400
-  //   var maxRetries: Int = call.argument("maxRetries") ?: 3
-  //   var mode: Int = call.argument("mode") ?: 2
-    
-  //   Log.d(logTag, "onPrintZplDataOverBluetooth $macAddress delay: $delay maxRetries: $maxRetries")
-  //   Log.d(logTag, "Original data length: ${data?.length ?: 0}")
-    
-  //   if (data == null) {
-  //     result.error("onPrintZplDataOverBluetooth", "Data is required", "Data Content")
-  //     return
-  //   }
-    
-  //   var conn: BluetoothLeConnection? = null
-  //   try {
-  //     conn = BluetoothLeConnection(macAddress, context)
-  //     conn.open()
-     
-
-  //     when (mode) {
-  //       1 -> {
-  //         conn.write(data.toByteArray())
-  //       }
-  //       else -> {
-           
-  //         val commands = splitString(data)
-  //         Log.d(logTag, "Split into ${commands.size} commands")
-          
-  //         if (commands.isEmpty()) {
-  //           result.error("onPrintZplDataOverBluetooth", "No valid ZPL commands found", "Check data format")
-  //           return
-  //         }
-  //         commands.forEachIndexed { index, command ->
-  //           var success = false
-  //           var retryCount = 0
-            
-  //           while (!success && retryCount < maxRetries) {
-  //             try {
-  //               Log.d(logTag, "Sending command ${index + 1}/${commands.size}, attempt ${retryCount + 1}")
-  //               conn.write(command.toByteArray())
-                
-  //               // Verify write operation (if possible)
-  //               Thread.sleep(delay.toLong())
-  //               success = true
-  //               Log.d(logTag, "Command ${index + 1} sent successfully")
-                
-  //             } catch (e: Exception) {
-  //               retryCount++
-  //               Log.w(logTag, "Failed to send command ${index + 1}, attempt $retryCount: ${e.message}")
-                
-  //               if (retryCount < maxRetries) {
-  //                 Thread.sleep(delay.toLong()) // Wait before retry
-  //               } else {
-  //                 throw e // Re-throw if all retries failed
-  //               }
-  //             }
-  //           }
-  //         }
-  //       }
-  //     }
-    
-  //     Thread.sleep(300);
-  //     result.success("Print completed successfully")
-      
-  //   } catch (e: Exception) {
-  //     e.printStackTrace()
-  //     Log.e(logTag, "Error in onPrintZplDataOverBluetooth: ${e.message}")
-  //     result.error("Error", "onPrintZplDataOverBluetooth", e.message)
-  //   } finally {
-  //     if (null != conn) {
-  //       try {
-  //         conn.close()
-  //         Log.d(logTag, "Connection closed")
-  //       } catch (e: ConnectionException) {
-  //         e.printStackTrace()
-  //       }
-  //     }
-  //   }
-  // }
-
-  //  fun splitString(data: String?): List<String> {
-  //   if (data.isNullOrEmpty()) return emptyList()
-  //   val regex = Regex("""\^XA.*?\^XZ""")
-  //   return regex.findAll(data).map { it.value }.toList()
-  // }
-  // private fun onPrintZplDataOverBluetooth(@NonNull call: MethodCall, @NonNull result: Result) {
-  //   var macAddress: String? = call.argument("mac")
-  //   var data: String? = call.argument("data")
-  //   Log.d(logTag, "onPrintZplDataOverBluetooth $macAddress $data")
-  //   if (data == null) {
-  //     result.error("onPrintZplDataOverBluetooth", "Data is required", "Data Content")
-  //   }
-  //   var conn: BluetoothLeConnection? = null
-  //   try {
-  //     conn = BluetoothLeConnection(macAddress, context)
-  //     conn.open()
-  //     val result = splitString(data)
-  //     result.forEach { part ->
-  //       conn.write(part.toByteArray())
-  //       Thread.sleep(400)
-  //     }
-  //     Thread.sleep(2000)
-  //   } catch (e: Exception) {
-  //     e.printStackTrace()
-  //     result.error("Error", "onPrintZplDataOverBluetooth", e)
-  //   } finally {
-  //     if (null != conn) {
-  //       try {
-  //         conn.close()
-  //       } catch (e: ConnectionException) {
-  //         e.printStackTrace()
-  //       }
-  //     }
-  //   }
-  // }
 
   private fun onGetPrinterInfo(@NonNull call: MethodCall, @NonNull result: Result) {
     var ipE: String? = call.argument("ip")
