@@ -199,19 +199,16 @@ class FlutterZebraSdkPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
     try {
         conn = BluetoothLeConnection(macAddress, context)
         conn.open()
-        Log.d(logTag, "onPrintZplDataOverBluetooth data length: ${data.length}")
         val partsToSend = splitString(data)
-        Log.d(logTag, "onPrintZplDataOverBluetooth data count: ${partsToSend.size}")
+        Thread.sleep(100) 
         partsToSend.forEach { part ->
-            Log.d(logTag, "onPrintZplDataOverBluetooth part to send: $part")
             conn.write(part.toByteArray())
-            Thread.sleep(500) 
+            Thread.sleep(350) 
         }
-        Thread.sleep(600)
+        Thread.sleep(1000)
         result.success(true)
     } catch (e: Exception) {
         e.printStackTrace()
-        result.error("onPrintZplDataOverBluetooth", "Error during printing: ${e.message}", e.toString())
     } finally {
         if (null != conn) {
             try {
